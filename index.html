@@ -1,130 +1,236 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat con Firebase - Cumpleaños Fatima</title>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, remove, get, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCgHojFMtxO0_FbONRMYdfCt8gxFpJMZxg",
+    authDomain: "chatweb-7d65a.firebaseapp.com",
+    databaseURL: "https://chatweb-7d65a-default-rtdb.firebaseio.com",
+    projectId: "chatweb-7d65a",
+    storageBucket: "chatweb-7d65a.firebasestorage.app",
+    messagingSenderId: "741436207771",
+    appId: "1:741436207771:web:707ee44969271b25fb4c3e",
+    measurementId: "G-7L7N83H41N"
+};
 
-  <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element"></script>
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  <style>
-    body, html {
-      height: 100%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .login-container, #chatSection {
-      max-width: 400px;
-      background: rgba(255,255,255,0.1);
-      padding: 2.5rem 2rem;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      margin: auto;
-      margin-top: 40px;
-    }
-    .login-title {
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
-    }
-    .form-control:focus {
-      border-color: #764ba2;
-      box-shadow: 0 0 8px #764ba2;
-    }
-    .btn-primary {
-      background: #764ba2;
-      border: none;
-      transition: background 0.3s ease;
-      font-weight: 600;
-    }
-    .btn-primary:hover {
-      background: #667eea;
-    }
-    #errorMsg {
-      display: none;
-    }
-    #chatBox {
-      height: 400px;
-      overflow-y: scroll;
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      color: black;
-      margin-bottom: 10px;
-    }
-    .message {
-      margin-bottom: 10px;
-    }
-    .username {
-      font-weight: bold;
-    }
-    .my-message {
-      text-align: right;
-    }
-    emoji-picker {
-      width: 100%;
-      max-height: 250px;
-      margin-top: 10px;
-    }
-    #userList {
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      color: black;
-    }
-  </style>
-</head>
-<body>
+const availableColors = [
+    "#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF",
+    "#E6CCFF", "#FFD1DC", "#FFE4B5", "#D5F5E3", "#D6EAF8",
+    "#F9E79F", "#F5B7B1", "#C39BD3", "#AED6F1", "#A3E4D7",
+    "#FAD7A0", "#EDBB99", "#F5CBA7", "#FDEBD0", "#F6DDCC"
+];
 
-  <!-- Login Section -->
-  <div id="loginSection" class="login-container">
-    <h1 class="login-title"><i class="bi bi-chat-dots-fill me-2"></i>Chat Cumpleaños Fatima 🎂</h1>
-    <form id="loginForm" novalidate>
-      <div class="mb-4">
-        <label for="username" class="form-label">Tu Nombre</label>
-        <input
-          type="text"
-          id="username"
-          class="form-control form-control-lg"
-          placeholder="Ingresa tu nombre"
-          required
-          autocomplete="off"
-          autofocus
-        />
-        <div class="invalid-feedback">Por favor, ingresa tu nombre para continuar.</div>
-      </div>
+const availableAnimals = [
+    "🐶 Perro",
+    "🐱 Gato",
+    "🐰 Conejo",
+    "🦊 Zorro",
+    "🐻 Oso",
+    "🐼 Panda",
+    "🐸 Rana",
+    "🦄 Unicornio",
+    "🐝 Abeja",
+    "🐧 Pingüino"
+];
 
-      <button type="submit" id="startChatBtn" class="btn btn-primary w-100 btn-lg" disabled>Entrar al Chat</button>
-    </form>
-    <div id="errorMsg" class="alert alert-danger mt-3" role="alert"></div>
-  </div>
+// DOM elements
+const loginSection = document.getElementById("loginSection");
+const chatSection = document.getElementById("chatSection");
+const chatBox = document.getElementById("chatBox");
+const userList = document.getElementById("userList");
+const messageInput = document.getElementById("messageInput");
+const startChatBtn = document.getElementById("startChatBtn");
+const emojiBtn = document.getElementById("emojiBtn");
+const emojiPicker = document.getElementById("emojiPicker");
+const sendBtn = document.getElementById("sendBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const chatTitle = document.getElementById("chatTitle");
+const usernameInput = document.getElementById("username");
 
-  <!-- Chat Section -->
-  <div id="chatSection" class="container py-4" style="display:none; max-width: 600px;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 id="chatTitle"><i class="bi bi-person-circle"></i> Usuario:</h3>
-      <button id="logoutBtn" class="btn btn-danger btn-sm">Salir</button>
-    </div>
-    <div id="userList"></div>
-    <div id="chatBox"></div>
-    <div class="input-group mt-3">
-      <input type="text" id="messageInput" class="form-control" placeholder="Escribe un mensaje..." autocomplete="off" />
-      <button id="emojiBtn" class="btn btn-secondary">😊</button>
-      <button id="sendBtn" class="btn btn-primary">Enviar</button>
-    </div>
-    <emoji-picker id="emojiPicker" style="display:none;"></emoji-picker>
-  </div>
+let username = "";
+let userRef;
+let userColor = "";
+let userAnimal = "";
 
-  <script type="module" src="app.js"></script>
+// Habilitar botón Entrar si hay texto
+usernameInput.addEventListener("input", () => {
+    startChatBtn.disabled = usernameInput.value.trim().length === 0;
+});
 
-</body>
-</html>
+// Manejar login
+loginSection.querySelector('form').addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = usernameInput.value.trim();
+    if (!name) {
+        showError("Por favor, ingresa un nombre válido.");
+        usernameInput.classList.add("is-invalid");
+        return;
+    }
+    usernameInput.classList.remove("is-invalid");
+    clearError();
+
+    username = name;
+    localStorage.setItem("chatUsername", username);
+    loginSection.style.display = "none";
+    chatSection.style.display = "block";
+
+    await registrarUsuario();
+    mostrarUsuario();
+    escucharUsuarios();
+    escucharMensajes();
+});
+
+// Mostrar mensaje error
+function showError(msg) {
+    const errorMsg = document.getElementById("errorMsg");
+    errorMsg.textContent = msg;
+    errorMsg.style.display = "block";
+}
+function clearError() {
+    const errorMsg = document.getElementById("errorMsg");
+    errorMsg.textContent = "";
+    errorMsg.style.display = "none";
+}
+
+// Cargar sesión si existe usuario guardado
+window.addEventListener("load", async () => {
+    const savedName = localStorage.getItem("chatUsername");
+    if (savedName) {
+        username = savedName;
+        loginSection.style.display = "none";
+        chatSection.style.display = "block";
+
+        await registrarUsuario();
+        mostrarUsuario();
+        escucharUsuarios();
+        escucharMensajes();
+    }
+});
+
+// Mostrar usuario arriba con color y animal
+function mostrarUsuario() {
+    if (chatTitle) {
+        chatTitle.innerHTML = `<i class="bi bi-person-circle"></i> Usuario: <span style="color:${userColor}">${username}</span> - <span>${userAnimal}</span>`;
+    }
+}
+
+// Obtener color y animal disponible
+async function obtenerIdentidadLibre() {
+    const snapshot = await get(ref(db, "usuarios"));
+    const data = snapshot.val() || {};
+
+    const usadosColores = new Set(Object.values(data).map(u => u.color));
+    const usadosAnimales = new Set(Object.values(data).map(u => u.animal));
+
+    const libresColores = availableColors.filter(c => !usadosColores.has(c));
+    const libresAnimales = availableAnimals.filter(a => !usadosAnimales.has(a));
+
+    const color = libresColores.length > 0
+        ? libresColores[Math.floor(Math.random() * libresColores.length)]
+        : availableColors[Math.floor(Math.random() * availableColors.length)];
+
+    const animal = libresAnimales.length > 0
+        ? libresAnimales[Math.floor(Math.random() * libresAnimales.length)]
+        : availableAnimals[Math.floor(Math.random() * availableAnimals.length)];
+
+    return { color, animal };
+}
+
+// Registrar usuario o recuperar identidad
+async function registrarUsuario() {
+    const userDbRef = ref(db, "usuarios/" + username);
+    const snapshot = await get(userDbRef);
+
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        userColor = data.color;
+        userAnimal = data.animal;
+
+        set(userDbRef, { conectado: true, timestamp: Date.now(), color: userColor, animal: userAnimal });
+    } else {
+        const identidad = await obtenerIdentidadLibre();
+        userColor = identidad.color;
+        userAnimal = identidad.animal;
+
+        set(userDbRef, { conectado: true, timestamp: Date.now(), color: userColor, animal: userAnimal });
+    }
+
+    userRef = userDbRef;
+    onDisconnect(userRef).remove();
+}
+
+// Escuchar usuarios conectados
+function escucharUsuarios() {
+    onValue(ref(db, "usuarios"), (snapshot) => {
+        userList.innerHTML = "<strong>Conectados:</strong><br>";
+        const data = snapshot.val();
+        for (let u in data) {
+            userList.innerHTML += `<span style="color:${data[u].color}">⬤</span> ${u} - ${data[u].animal}<br>`;
+        }
+    });
+}
+
+// Enviar mensaje
+sendBtn.addEventListener("click", () => {
+    enviarMensaje(messageInput.value);
+    messageInput.value = "";
+});
+
+messageInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        enviarMensaje(messageInput.value);
+        messageInput.value = "";
+    }
+});
+
+function enviarMensaje(texto) {
+    if (texto.trim() !== "") {
+        const mensajesRef = ref(db, "mensajes");
+        const nuevoMensaje = push(mensajesRef);
+        set(nuevoMensaje, {
+            usuario: username,
+            texto: texto,
+            timestamp: Date.now(),
+            color: userColor
+        });
+    }
+}
+
+// Escuchar mensajes en tiempo real
+function escucharMensajes() {
+    onValue(ref(db, "mensajes"), (snapshot) => {
+        chatBox.innerHTML = "";
+        const data = snapshot.val();
+        for (let id in data) {
+            const msg = data[id];
+            const msgDiv = document.createElement("div");
+            msgDiv.classList.add("message");
+            if (msg.usuario === username) msgDiv.classList.add("my-message");
+
+            const fecha = new Date(msg.timestamp);
+            const hora = fecha.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+            msgDiv.innerHTML = `
+                <span class="username" style="color:${msg.color}">${msg.usuario}:</span> ${msg.texto}
+                <div class="text-muted small">${hora}</div>
+            `;
+            chatBox.appendChild(msgDiv);
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+}
+
+// Mostrar/Ocultar picker emoji
+emojiBtn.addEventListener("click", () => {
+    emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+});
+
+emojiPicker.addEventListener("emoji-click", (event) => {
+    messageInput.value += event.detail.unicode;
+});
+
+// Salir del chat
+logoutBtn.addEventListener("click",
