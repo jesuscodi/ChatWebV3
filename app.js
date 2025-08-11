@@ -18,10 +18,24 @@ const db = getDatabase(app);
 
 // Colores pastel disponibles
 const availableColors = [
-    "#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF", 
+    "#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF",
     "#E6CCFF", "#FFD1DC", "#FFE4B5", "#D5F5E3", "#D6EAF8",
     "#F9E79F", "#F5B7B1", "#C39BD3", "#AED6F1", "#A3E4D7",
     "#FAD7A0", "#EDBB99", "#F5CBA7", "#FDEBD0", "#F6DDCC"
+];
+
+// Animales disponibles
+const availableAnimals = [
+    "🐶 Perro",
+    "🐱 Gato",
+    "🐰 Conejo",
+    "🦊 Zorro",
+    "🐻 Oso",
+    "🐼 Panda",
+    "🐸 Rana",
+    "🦄 Unicornio",
+    "🐝 Abeja",
+    "🐧 Pingüino"
 ];
 
 // Elementos del DOM
@@ -35,11 +49,12 @@ const emojiBtn = document.getElementById("emojiBtn");
 const emojiPicker = document.getElementById("emojiPicker");
 const sendBtn = document.getElementById("sendBtn");
 const logoutBtn = document.getElementById("logoutBtn");
-const currentUserDiv = document.getElementById("currentUser");
+const chatTitle = document.getElementById("chatTitle");
 
 let username = "";
 let userRef;
 let userColor = "";
+let userAnimal = "";
 
 // Entrar al chat
 startChatBtn.addEventListener("click", async () => {
@@ -52,7 +67,6 @@ startChatBtn.addEventListener("click", async () => {
 
         await registrarUsuario();
 
-        // Mostrar usuario arriba con color
         mostrarUsuario();
 
         escucharUsuarios();
@@ -70,7 +84,6 @@ window.addEventListener("load", async () => {
 
         await registrarUsuario();
 
-        // Mostrar usuario arriba con color
         mostrarUsuario();
 
         escucharUsuarios();
@@ -78,29 +91,58 @@ window.addEventListener("load", async () => {
     }
 });
 
-// Mostrar usuario arriba con color
+// Mostrar usuario arriba con color y animal
 function mostrarUsuario() {
-    if (currentUserDiv) {
-        currentUserDiv.textContent = `Usuario: ${username}`;
-        currentUserDiv.style.color = userColor;
+    if (chatTitle) {
+        chatTitle.innerHTML = `<i class="bi bi-person-circle"></i> Usuario: <span style="color:${userColor}">${username}</span> - <span>${userAnimal}</span>`;
     }
 }
 
-// Asignar un color pastel libre
-async function obtenerColorLibre() {
+// Obtener color y animal libre
+async function obtenerIdentidadLibre() {
     const snapshot = await get(ref(db, "usuarios"));
     const data = snapshot.val() || {};
-    const usados = new Set(Object.values(data).map(u => u.color));
-    const libres = availableColors.filter(c => !usados.has(c));
-    return libres.length > 0 ? libres[Math.floor(Math.random() * libres.length)] : availableColors[Math.floor(Math.random() * availableColors.length)];
+
+    const usadosColores = new Set(Object.values(data).map(u => u.color));
+    const usadosAnimales = new Set(Object.values(data).map(u => u.animal));
+
+    const libresColores = availableColors.filter(c => !usadosColores.has(c));
+    const libresAnimales = availableAnimals.filter(a => !usadosAnimales.has(a));
+
+    const color = libresColores.length > 0
+        ? libresColores[Math.floor(Math.random() * libresColores.length)]
+        : availableColors[Math.floor(Math.random() * availableColors.length)];
+
+    const animal = libresAnimales.length > 0
+        ? libresAnimales[Math.floor(Math.random() * libresAnimales.length)]
+        : availableAnimals[Math.floor(Math.random() * availableAnimals.length)];
+
+    return { color, animal };
 }
 
-// Registrar usuario
+// Registrar usuario (ahora revisa si ya existe)
 async function registrarUsuario() {
-    userColor = await obtenerColorLibre();
-    const usersRef = ref(db, "usuarios/" + username);
-    userRef = usersRef;
-    set(userRef, { conectado: true, timestamp: Date.now(), color: userColor });
+    const userDbRef = ref(db, "usuarios/" + username);
+    const snapshot = await get(userDbRef);
+
+    if (snapshot.exists()) {
+        // Ya existe usuario: usamos los datos guardados
+        const data = snapshot.val();
+        userColor = data.color;
+        userAnimal = data.animal;
+
+        // Actualizamos el timestamp y conectado
+        set(userDbRef, { conectado: true, timestamp: Date.now(), color: userColor, animal: userAnimal });
+    } else {
+        // Usuario nuevo: asignamos identidad nueva
+        const identidad = await obtenerIdentidadLibre();
+        userColor = identidad.color;
+        userAnimal = identidad.animal;
+
+        set(userDbRef, { conectado: true, timestamp: Date.now(), color: userColor, animal: userAnimal });
+    }
+
+    userRef = userDbRef;
     onDisconnect(userRef).remove();
 }
 
@@ -110,7 +152,7 @@ function escucharUsuarios() {
         userList.innerHTML = "<strong>Conectados:</strong><br>";
         const data = snapshot.val();
         for (let u in data) {
-            userList.innerHTML += `<span style="color:${data[u].color}">⬤</span> ${u}<br>`;
+            userList.innerHTML += `<span style="color:${data[u].color}">⬤</span> ${u} - ${data[u].animal}<br>`;
         }
     });
 }
