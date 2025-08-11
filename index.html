@@ -9,11 +9,35 @@
     <style>
         body { background-color: #f5f5f5; }
         #chatBox { height: 400px; overflow-y: scroll; background: white; padding: 10px; border-radius: 10px; }
-        .message { margin-bottom: 10px; }
-        .username { font-weight: bold; }
-        .my-message { text-align: right; }
-        emoji-picker { width: 100%; max-height: 250px; }
-        #userList { background: white; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+        .message { 
+            margin-bottom: 10px; 
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .username { 
+            font-weight: bold; 
+            /* No forzar color, será dinámico en JS */
+        }
+        .my-message { 
+            text-align: right; 
+            background: #e6ffe6;
+        }
+        emoji-picker { 
+            width: 100%; 
+            max-height: 250px; 
+        }
+        #userList { 
+            background: white; 
+            padding: 10px; 
+            border-radius: 10px; 
+            margin-bottom: 10px; 
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: gray;
+            display: block;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body class="container py-4">
