@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Configuración de Firebase (usa tus datos reales aquí)
+// Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCgHojFMtxO0_FbONRMYdfCt8gxFpJMZxg",
     authDomain: "chatweb-7d65a.firebaseapp.com",
@@ -15,6 +15,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+// Colores pastel disponibles
+const availableColors = [
+    "#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF", 
+    "#E6CCFF", "#FFD1DC", "#FFE4B5", "#D5F5E3", "#D6EAF8",
+    "#F9E79F", "#F5B7B1", "#C39BD3", "#AED6F1", "#A3E4D7",
+    "#FAD7A0", "#EDBB99", "#F5CBA7", "#FDEBD0", "#F6DDCC"
+];
 
 // Elementos del DOM
 const loginSection = document.getElementById("loginSection");
@@ -30,63 +38,62 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let username = "";
 let userRef;
-let usuariosConColores = {};
+let userColor = "";
 
 // Entrar al chat
-startChatBtn.addEventListener("click", () => {
+startChatBtn.addEventListener("click", async () => {
     const nameInput = document.getElementById("username");
     if (nameInput.value.trim() !== "") {
         username = nameInput.value.trim();
         localStorage.setItem("chatUsername", username);
         loginSection.style.display = "none";
         chatSection.style.display = "block";
-        registrarUsuario();
+        await registrarUsuario();
         escucharUsuarios();
         escucharMensajes();
     }
 });
 
 // Revisar si ya hay nombre guardado
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
     const savedName = localStorage.getItem("chatUsername");
     if (savedName) {
         username = savedName;
         loginSection.style.display = "none";
         chatSection.style.display = "block";
-        registrarUsuario();
+        await registrarUsuario();
         escucharUsuarios();
         escucharMensajes();
     }
 });
 
-// Registrar usuario en lista de conectados con color
-function registrarUsuario() {
-    const color = generarColor();
+// Asignar un color pastel libre
+async function obtenerColorLibre() {
+    const snapshot = await get(ref(db, "usuarios"));
+    const data = snapshot.val() || {};
+    const usados = new Set(Object.values(data).map(u => u.color));
+    const libres = availableColors.filter(c => !usados.has(c));
+    return libres.length > 0 ? libres[Math.floor(Math.random() * libres.length)] : availableColors[Math.floor(Math.random() * availableColors.length)];
+}
+
+// Registrar usuario
+async function registrarUsuario() {
+    userColor = await obtenerColorLibre();
     const usersRef = ref(db, "usuarios/" + username);
     userRef = usersRef;
-    set(userRef, { 
-        conectado: true, 
-        timestamp: Date.now(),
-        color: color
-    });
+    set(userRef, { conectado: true, timestamp: Date.now(), color: userColor });
     window.addEventListener("beforeunload", () => {
         remove(userRef);
     });
 }
 
-// Función para generar color HEX aleatorio
-function generarColor() {
-    return "#" + Math.floor(Math.random() * 16777215).toString(16);
-}
-
-// Escuchar lista de usuarios conectados
+// Escuchar lista de usuarios
 function escucharUsuarios() {
     onValue(ref(db, "usuarios"), (snapshot) => {
-        usuariosConColores = snapshot.val() || {};
         userList.innerHTML = "<strong>Conectados:</strong><br>";
-        for (let u in usuariosConColores) {
-            const color = usuariosConColores[u].color || "#000";
-            userList.innerHTML += `<span style="color:${color}">✅ ${u}</span><br>`;
+        const data = snapshot.val();
+        for (let u in data) {
+            userList.innerHTML += `<span style="color:${data[u].color}">⬤</span> ${u}<br>`;
         }
     });
 }
@@ -111,12 +118,13 @@ function enviarMensaje(texto) {
         set(nuevoMensaje, {
             usuario: username,
             texto: texto,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            color: userColor
         });
     }
 }
 
-// Escuchar mensajes en tiempo real con color y hora
+// Escuchar mensajes en tiempo real
 function escucharMensajes() {
     onValue(ref(db, "mensajes"), (snapshot) => {
         chatBox.innerHTML = "";
@@ -125,17 +133,13 @@ function escucharMensajes() {
             const msg = data[id];
             const msgDiv = document.createElement("div");
             msgDiv.classList.add("message");
-            if (msg.usuario === username) {
-                msgDiv.classList.add("my-message");
-            }
+            if (msg.usuario === username) msgDiv.classList.add("my-message");
 
             const fecha = new Date(msg.timestamp);
             const hora = fecha.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-            const color = usuariosConColores[msg.usuario]?.color || "#000";
-
             msgDiv.innerHTML = `
-                <span class="username" style="color:${color}">${msg.usuario}:</span> ${msg.texto}
+                <span class="username" style="color:${msg.color}">${msg.usuario}:</span> ${msg.texto}
                 <div class="text-muted small">${hora}</div>
             `;
             chatBox.appendChild(msgDiv);
@@ -144,7 +148,7 @@ function escucharMensajes() {
     });
 }
 
-// Mostrar/ocultar emojis
+// Emojis
 emojiBtn.addEventListener("click", () => {
     emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
 });
@@ -153,6 +157,7 @@ emojiPicker.addEventListener("emoji-click", (event) => {
     messageInput.value += event.detail.unicode;
 });
 
+// Salir
 logoutBtn.addEventListener("click", () => {
     localStorage.removeItem("chatUsername");
     remove(userRef);
