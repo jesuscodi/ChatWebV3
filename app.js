@@ -104,7 +104,7 @@ function enviarMensaje(texto) {
     }
 }
 
-// Escuchar mensajes en tiempo real
+// Escuchar mensajes en tiempo real con hora
 function escucharMensajes() {
     onValue(ref(db, "mensajes"), (snapshot) => {
         chatBox.innerHTML = "";
@@ -116,7 +116,15 @@ function escucharMensajes() {
             if (msg.usuario === username) {
                 msgDiv.classList.add("my-message");
             }
-            msgDiv.innerHTML = `<span class="username">${msg.usuario}:</span> ${msg.texto}`;
+
+            // Formatear hora (HH:MM)
+            const fecha = new Date(msg.timestamp);
+            const hora = fecha.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+            msgDiv.innerHTML = `
+                <span class="username">${msg.usuario}:</span> ${msg.texto}
+                <div class="text-muted small">${hora}</div>
+            `;
             chatBox.appendChild(msgDiv);
         }
         chatBox.scrollTop = chatBox.scrollHeight;
