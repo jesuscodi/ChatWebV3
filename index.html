@@ -1,125 +1,130 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Chat con Firebase - Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat con Firebase - Cumpleaños Fatima</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+  <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element"></script>
 
-    <style>
-        body, html {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .login-container {
-            max-width: 400px;
-            background: rgba(255,255,255,0.1);
-            padding: 2.5rem 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            margin: auto;
-        }
-        .login-title {
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
-        }
-        .form-control:focus {
-            border-color: #764ba2;
-            box-shadow: 0 0 8px #764ba2;
-        }
-        .btn-primary {
-            background: #764ba2;
-            border: none;
-            transition: background 0.3s ease;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background: #667eea;
-        }
-        #errorMsg {
-            display: none;
-        }
-    </style>
+  <style>
+    body, html {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .login-container, #chatSection {
+      max-width: 400px;
+      background: rgba(255,255,255,0.1);
+      padding: 2.5rem 2rem;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      margin: auto;
+      margin-top: 40px;
+    }
+    .login-title {
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+    }
+    .form-control:focus {
+      border-color: #764ba2;
+      box-shadow: 0 0 8px #764ba2;
+    }
+    .btn-primary {
+      background: #764ba2;
+      border: none;
+      transition: background 0.3s ease;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: #667eea;
+    }
+    #errorMsg {
+      display: none;
+    }
+    #chatBox {
+      height: 400px;
+      overflow-y: scroll;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      color: black;
+      margin-bottom: 10px;
+    }
+    .message {
+      margin-bottom: 10px;
+    }
+    .username {
+      font-weight: bold;
+    }
+    .my-message {
+      text-align: right;
+    }
+    emoji-picker {
+      width: 100%;
+      max-height: 250px;
+      margin-top: 10px;
+    }
+    #userList {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      color: black;
+    }
+  </style>
 </head>
-<body class="d-flex align-items-center vh-100">
+<body>
 
-    <div class="login-container shadow-lg">
-        <h1 class="login-title"><i class="bi bi-chat-dots-fill me-2"></i>Chat Cumpleaños Fatima 🎂</h1>
-        <form id="loginForm" novalidate>
-            <div class="mb-4">
-                <label for="username" class="form-label">Tu Nombre</label>
-                <input
-                    type="text"
-                    id="username"
-                    class="form-control form-control-lg"
-                    placeholder="Ingresa tu nombre"
-                    required
-                    autocomplete="off"
-                    autofocus
-                />
-                <div class="invalid-feedback">Por favor, ingresa tu nombre para continuar.</div>
-            </div>
+  <!-- Login Section -->
+  <div id="loginSection" class="login-container">
+    <h1 class="login-title"><i class="bi bi-chat-dots-fill me-2"></i>Chat Cumpleaños Fatima 🎂</h1>
+    <form id="loginForm" novalidate>
+      <div class="mb-4">
+        <label for="username" class="form-label">Tu Nombre</label>
+        <input
+          type="text"
+          id="username"
+          class="form-control form-control-lg"
+          placeholder="Ingresa tu nombre"
+          required
+          autocomplete="off"
+          autofocus
+        />
+        <div class="invalid-feedback">Por favor, ingresa tu nombre para continuar.</div>
+      </div>
 
-            <button type="submit" id="startChatBtn" class="btn btn-primary w-100 btn-lg" disabled>Entrar al Chat</button>
-        </form>
-        <div id="errorMsg" class="alert alert-danger mt-3" role="alert"></div>
+      <button type="submit" id="startChatBtn" class="btn btn-primary w-100 btn-lg" disabled>Entrar al Chat</button>
+    </form>
+    <div id="errorMsg" class="alert alert-danger mt-3" role="alert"></div>
+  </div>
+
+  <!-- Chat Section -->
+  <div id="chatSection" class="container py-4" style="display:none; max-width: 600px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 id="chatTitle"><i class="bi bi-person-circle"></i> Usuario:</h3>
+      <button id="logoutBtn" class="btn btn-danger btn-sm">Salir</button>
     </div>
+    <div id="userList"></div>
+    <div id="chatBox"></div>
+    <div class="input-group mt-3">
+      <input type="text" id="messageInput" class="form-control" placeholder="Escribe un mensaje..." autocomplete="off" />
+      <button id="emojiBtn" class="btn btn-secondary">😊</button>
+      <button id="sendBtn" class="btn btn-primary">Enviar</button>
+    </div>
+    <emoji-picker id="emojiPicker" style="display:none;"></emoji-picker>
+  </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="app.js"></script>
 
-    <script>
-        const usernameInput = document.getElementById('username');
-        const startChatBtn = document.getElementById('startChatBtn');
-        const loginForm = document.getElementById('loginForm');
-        const errorMsg = document.getElementById('errorMsg');
-
-        // Habilita botón si hay texto
-        usernameInput.addEventListener('input', () => {
-            if(usernameInput.value.trim().length > 0) {
-                startChatBtn.disabled = false;
-                usernameInput.classList.remove('is-invalid');
-                errorMsg.style.display = 'none';
-            } else {
-                startChatBtn.disabled = true;
-            }
-        });
-
-        // Validación al enviar
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = usernameInput.value.trim();
-            if(username.length === 0) {
-                usernameInput.classList.add('is-invalid');
-                errorMsg.textContent = "El nombre no puede estar vacío.";
-                errorMsg.style.display = 'block';
-                return;
-            }
-            // Aquí continúa la lógica para entrar al chat (por ejemplo llamar a función)
-            // Para este demo solo guardamos el usuario en localStorage y recargamos:
-            localStorage.setItem('chatUsername', username);
-            location.reload();
-        });
-
-        // Si hay usuario guardado, habilitar entrada automática
-        window.addEventListener('load', () => {
-            const savedName = localStorage.getItem('chatUsername');
-            if(savedName) {
-                usernameInput.value = savedName;
-                startChatBtn.disabled = false;
-            }
-        });
-    </script>
 </body>
 </html>
