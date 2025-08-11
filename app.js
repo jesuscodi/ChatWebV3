@@ -1,16 +1,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Configuración de Firebase
+// Configuración de Firebase (usa tus datos reales aquí)
 const firebaseConfig = {
-  apiKey: "AIzaSyCgHojFMtxO0_FbONRMYdfCt8gxFpJMZxg",
-  authDomain: "chatweb-7d65a.firebaseapp.com",
-  databaseURL: "https://chatweb-7d65a-default-rtdb.firebaseio.com",
-  projectId: "chatweb-7d65a",
-  storageBucket: "chatweb-7d65a.firebasestorage.app",
-  messagingSenderId: "741436207771",
-  appId: "1:741436207771:web:707ee44969271b25fb4c3e",
-  measurementId: "G-7L7N83H41N"
+    apiKey: "AIzaSyCgHojFMtxO0_FbONRMYdfCt8gxFpJMZxg",
+    authDomain: "chatweb-7d65a.firebaseapp.com",
+    databaseURL: "https://chatweb-7d65a-default-rtdb.firebaseio.com",
+    projectId: "chatweb-7d65a",
+    storageBucket: "chatweb-7d65a.firebasestorage.app",
+    messagingSenderId: "741436207771",
+    appId: "1:741436207771:web:707ee44969271b25fb4c3e",
+    measurementId: "G-7L7N83H41N"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -30,21 +30,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let username = "";
 let userRef;
-
-// 🎨 Guardar colores únicos por usuario
-const userColors = {};
-
-function getUserColor(name) {
-    if (!userColors[name]) {
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) {
-            hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const hue = Math.abs(hash) % 360;
-        userColors[name] = `hsl(${hue}, 70%, 50%)`;
-    }
-    return userColors[name];
-}
+let usuariosConColores = {};
 
 // Entrar al chat
 startChatBtn.addEventListener("click", () => {
@@ -73,23 +59,33 @@ window.addEventListener("load", () => {
     }
 });
 
-// Registrar usuario en lista de conectados
+// Registrar usuario en lista de conectados con color
 function registrarUsuario() {
+    const color = generarColor();
     const usersRef = ref(db, "usuarios/" + username);
     userRef = usersRef;
-    set(userRef, { conectado: true, timestamp: Date.now() });
+    set(userRef, { 
+        conectado: true, 
+        timestamp: Date.now(),
+        color: color
+    });
     window.addEventListener("beforeunload", () => {
         remove(userRef);
     });
 }
 
-// Escuchar lista de usuarios conectados con color
+// Función para generar color HEX aleatorio
+function generarColor() {
+    return "#" + Math.floor(Math.random() * 16777215).toString(16);
+}
+
+// Escuchar lista de usuarios conectados
 function escucharUsuarios() {
     onValue(ref(db, "usuarios"), (snapshot) => {
+        usuariosConColores = snapshot.val() || {};
         userList.innerHTML = "<strong>Conectados:</strong><br>";
-        const data = snapshot.val();
-        for (let u in data) {
-            const color = getUserColor(u);
+        for (let u in usuariosConColores) {
+            const color = usuariosConColores[u].color || "#000";
             userList.innerHTML += `<span style="color:${color}">✅ ${u}</span><br>`;
         }
     });
@@ -120,7 +116,7 @@ function enviarMensaje(texto) {
     }
 }
 
-// Escuchar mensajes en tiempo real con hora y color
+// Escuchar mensajes en tiempo real con color y hora
 function escucharMensajes() {
     onValue(ref(db, "mensajes"), (snapshot) => {
         chatBox.innerHTML = "";
@@ -133,12 +129,13 @@ function escucharMensajes() {
                 msgDiv.classList.add("my-message");
             }
 
-            // Formatear hora
             const fecha = new Date(msg.timestamp);
             const hora = fecha.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+            const color = usuariosConColores[msg.usuario]?.color || "#000";
+
             msgDiv.innerHTML = `
-                <span class="username" style="color:${getUserColor(msg.usuario)}">${msg.usuario}:</span> ${msg.texto}
+                <span class="username" style="color:${color}">${msg.usuario}:</span> ${msg.texto}
                 <div class="text-muted small">${hora}</div>
             `;
             chatBox.appendChild(msgDiv);
