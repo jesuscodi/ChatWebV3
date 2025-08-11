@@ -16,7 +16,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Colores pastel disponibles
 const availableColors = [
     "#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF",
     "#E6CCFF", "#FFD1DC", "#FFE4B5", "#D5F5E3", "#D6EAF8",
@@ -24,7 +23,6 @@ const availableColors = [
     "#FAD7A0", "#EDBB99", "#F5CBA7", "#FDEBD0", "#F6DDCC"
 ];
 
-// Animales disponibles
 const availableAnimals = [
     "🐶 Perro",
     "🐱 Gato",
@@ -38,7 +36,7 @@ const availableAnimals = [
     "🐧 Pingüino"
 ];
 
-// Elementos del DOM
+// DOM elements
 const loginSection = document.getElementById("loginSection");
 const chatSection = document.getElementById("chatSection");
 const chatBox = document.getElementById("chatBox");
@@ -50,31 +48,54 @@ const emojiPicker = document.getElementById("emojiPicker");
 const sendBtn = document.getElementById("sendBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const chatTitle = document.getElementById("chatTitle");
+const usernameInput = document.getElementById("username");
 
 let username = "";
 let userRef;
 let userColor = "";
 let userAnimal = "";
 
-// Entrar al chat
-startChatBtn.addEventListener("click", async () => {
-    const nameInput = document.getElementById("username");
-    if (nameInput.value.trim() !== "") {
-        username = nameInput.value.trim();
-        localStorage.setItem("chatUsername", username);
-        loginSection.style.display = "none";
-        chatSection.style.display = "block";
-
-        await registrarUsuario();
-
-        mostrarUsuario();
-
-        escucharUsuarios();
-        escucharMensajes();
-    }
+// Habilitar botón Entrar si hay texto
+usernameInput.addEventListener("input", () => {
+    startChatBtn.disabled = usernameInput.value.trim().length === 0;
 });
 
-// Revisar si ya hay nombre guardado y arrancar sesión
+// Manejar login
+loginSection.querySelector('form').addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = usernameInput.value.trim();
+    if (!name) {
+        showError("Por favor, ingresa un nombre válido.");
+        usernameInput.classList.add("is-invalid");
+        return;
+    }
+    usernameInput.classList.remove("is-invalid");
+    clearError();
+
+    username = name;
+    localStorage.setItem("chatUsername", username);
+    loginSection.style.display = "none";
+    chatSection.style.display = "block";
+
+    await registrarUsuario();
+    mostrarUsuario();
+    escucharUsuarios();
+    escucharMensajes();
+});
+
+// Mostrar mensaje error
+function showError(msg) {
+    const errorMsg = document.getElementById("errorMsg");
+    errorMsg.textContent = msg;
+    errorMsg.style.display = "block";
+}
+function clearError() {
+    const errorMsg = document.getElementById("errorMsg");
+    errorMsg.textContent = "";
+    errorMsg.style.display = "none";
+}
+
+// Cargar sesión si existe usuario guardado
 window.addEventListener("load", async () => {
     const savedName = localStorage.getItem("chatUsername");
     if (savedName) {
@@ -83,9 +104,7 @@ window.addEventListener("load", async () => {
         chatSection.style.display = "block";
 
         await registrarUsuario();
-
         mostrarUsuario();
-
         escucharUsuarios();
         escucharMensajes();
     }
@@ -98,7 +117,7 @@ function mostrarUsuario() {
     }
 }
 
-// Obtener color y animal libre para nuevo usuario
+// Obtener color y animal disponible
 async function obtenerIdentidadLibre() {
     const snapshot = await get(ref(db, "usuarios"));
     const data = snapshot.val() || {};
@@ -120,7 +139,7 @@ async function obtenerIdentidadLibre() {
     return { color, animal };
 }
 
-// Registrar usuario (si ya existe usar identidad guardada)
+// Registrar usuario o recuperar identidad
 async function registrarUsuario() {
     const userDbRef = ref(db, "usuarios/" + username);
     const snapshot = await get(userDbRef);
@@ -143,7 +162,7 @@ async function registrarUsuario() {
     onDisconnect(userRef).remove();
 }
 
-// Escuchar lista de usuarios conectados
+// Escuchar usuarios conectados
 function escucharUsuarios() {
     onValue(ref(db, "usuarios"), (snapshot) => {
         userList.innerHTML = "<strong>Conectados:</strong><br>";
@@ -180,7 +199,7 @@ function enviarMensaje(texto) {
     }
 }
 
-// Escuchar mensajes en tiempo real y mostrar
+// Escuchar mensajes en tiempo real
 function escucharMensajes() {
     onValue(ref(db, "mensajes"), (snapshot) => {
         chatBox.innerHTML = "";
@@ -204,7 +223,7 @@ function escucharMensajes() {
     });
 }
 
-// Mostrar/ocultar emoji picker
+// Mostrar/Ocultar picker emoji
 emojiBtn.addEventListener("click", () => {
     emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
 });
@@ -214,9 +233,4 @@ emojiPicker.addEventListener("emoji-click", (event) => {
 });
 
 // Salir del chat
-logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("chatUsername");
-    remove(userRef);
-    chatSection.style.display = "none";
-    loginSection.style.display = "block";
-});
+logoutBtn.addEventListener("click",
