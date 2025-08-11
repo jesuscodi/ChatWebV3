@@ -74,7 +74,7 @@ startChatBtn.addEventListener("click", async () => {
     }
 });
 
-// Revisar si ya hay nombre guardado
+// Revisar si ya hay nombre guardado y arrancar sesión
 window.addEventListener("load", async () => {
     const savedName = localStorage.getItem("chatUsername");
     if (savedName) {
@@ -98,7 +98,7 @@ function mostrarUsuario() {
     }
 }
 
-// Obtener color y animal libre
+// Obtener color y animal libre para nuevo usuario
 async function obtenerIdentidadLibre() {
     const snapshot = await get(ref(db, "usuarios"));
     const data = snapshot.val() || {};
@@ -120,21 +120,18 @@ async function obtenerIdentidadLibre() {
     return { color, animal };
 }
 
-// Registrar usuario (ahora revisa si ya existe)
+// Registrar usuario (si ya existe usar identidad guardada)
 async function registrarUsuario() {
     const userDbRef = ref(db, "usuarios/" + username);
     const snapshot = await get(userDbRef);
 
     if (snapshot.exists()) {
-        // Ya existe usuario: usamos los datos guardados
         const data = snapshot.val();
         userColor = data.color;
         userAnimal = data.animal;
 
-        // Actualizamos el timestamp y conectado
         set(userDbRef, { conectado: true, timestamp: Date.now(), color: userColor, animal: userAnimal });
     } else {
-        // Usuario nuevo: asignamos identidad nueva
         const identidad = await obtenerIdentidadLibre();
         userColor = identidad.color;
         userAnimal = identidad.animal;
@@ -146,7 +143,7 @@ async function registrarUsuario() {
     onDisconnect(userRef).remove();
 }
 
-// Escuchar lista de usuarios
+// Escuchar lista de usuarios conectados
 function escucharUsuarios() {
     onValue(ref(db, "usuarios"), (snapshot) => {
         userList.innerHTML = "<strong>Conectados:</strong><br>";
@@ -183,7 +180,7 @@ function enviarMensaje(texto) {
     }
 }
 
-// Escuchar mensajes en tiempo real
+// Escuchar mensajes en tiempo real y mostrar
 function escucharMensajes() {
     onValue(ref(db, "mensajes"), (snapshot) => {
         chatBox.innerHTML = "";
@@ -207,7 +204,7 @@ function escucharMensajes() {
     });
 }
 
-// Emojis
+// Mostrar/ocultar emoji picker
 emojiBtn.addEventListener("click", () => {
     emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
 });
@@ -216,7 +213,7 @@ emojiPicker.addEventListener("emoji-click", (event) => {
     messageInput.value += event.detail.unicode;
 });
 
-// Salir
+// Salir del chat
 logoutBtn.addEventListener("click", () => {
     localStorage.removeItem("chatUsername");
     remove(userRef);
