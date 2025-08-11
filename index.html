@@ -25,21 +25,25 @@
         <button id="startChatBtn" class="btn btn-primary">Entrar al Chat</button>
     </div>
 
-    <!-- Chat -->
-    <div id="chatSection" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h3>Chat en Vivo</h3>
+   <!-- Chat -->
+<div id="chatSection" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3>Chat en Vivo</h3>
+        <div>
+            <span id="currentUser" class="fw-bold me-3"></span>
             <button id="logoutBtn" class="btn btn-danger btn-sm">Salir</button>
         </div>
-        <div id="userList"></div>
-        <div id="chatBox"></div>
-        <div class="input-group mt-3">
-            <input type="text" id="messageInput" class="form-control" placeholder="Escribe un mensaje...">
-            <button id="emojiBtn" class="btn btn-secondary">😊</button>
-            <button id="sendBtn" class="btn btn-primary">Enviar</button>
-        </div>
-        <emoji-picker id="emojiPicker" style="display: none;"></emoji-picker>
     </div>
+    <div id="userList"></div>
+    <div id="chatBox"></div>
+    <div class="input-group mt-3">
+        <input type="text" id="messageInput" class="form-control" placeholder="Escribe un mensaje...">
+        <button id="emojiBtn" class="btn btn-secondary">😊</button>
+        <button id="sendBtn" class="btn btn-primary">Enviar</button>
+    </div>
+    <emoji-picker id="emojiPicker" style="display: none;"></emoji-picker>
+</div>
+
 
     <script type="module" src="app.js"></script>
 </body>
