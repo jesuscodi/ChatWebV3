@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, remove, get, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -35,6 +35,7 @@ const emojiBtn = document.getElementById("emojiBtn");
 const emojiPicker = document.getElementById("emojiPicker");
 const sendBtn = document.getElementById("sendBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const currentUserDiv = document.getElementById("currentUser");
 
 let username = "";
 let userRef;
@@ -48,7 +49,12 @@ startChatBtn.addEventListener("click", async () => {
         localStorage.setItem("chatUsername", username);
         loginSection.style.display = "none";
         chatSection.style.display = "block";
+
         await registrarUsuario();
+
+        // Mostrar usuario arriba con color
+        mostrarUsuario();
+
         escucharUsuarios();
         escucharMensajes();
     }
@@ -61,11 +67,24 @@ window.addEventListener("load", async () => {
         username = savedName;
         loginSection.style.display = "none";
         chatSection.style.display = "block";
+
         await registrarUsuario();
+
+        // Mostrar usuario arriba con color
+        mostrarUsuario();
+
         escucharUsuarios();
         escucharMensajes();
     }
 });
+
+// Mostrar usuario arriba con color
+function mostrarUsuario() {
+    if (currentUserDiv) {
+        currentUserDiv.textContent = `Usuario: ${username}`;
+        currentUserDiv.style.color = userColor;
+    }
+}
 
 // Asignar un color pastel libre
 async function obtenerColorLibre() {
@@ -82,9 +101,7 @@ async function registrarUsuario() {
     const usersRef = ref(db, "usuarios/" + username);
     userRef = usersRef;
     set(userRef, { conectado: true, timestamp: Date.now(), color: userColor });
-    window.addEventListener("beforeunload", () => {
-        remove(userRef);
-    });
+    onDisconnect(userRef).remove();
 }
 
 // Escuchar lista de usuarios
