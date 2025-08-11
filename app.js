@@ -1,9 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Configuración de Firebase (usa tus datos reales aquí)
+// Configuración de Firebase
 const firebaseConfig = {
- apiKey: "AIzaSyCgHojFMtxO0_FbONRMYdfCt8gxFpJMZxg",
+  apiKey: "AIzaSyCgHojFMtxO0_FbONRMYdfCt8gxFpJMZxg",
   authDomain: "chatweb-7d65a.firebaseapp.com",
   databaseURL: "https://chatweb-7d65a-default-rtdb.firebaseio.com",
   projectId: "chatweb-7d65a",
@@ -30,6 +30,21 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let username = "";
 let userRef;
+
+// 🎨 Guardar colores únicos por usuario
+const userColors = {};
+
+function getUserColor(name) {
+    if (!userColors[name]) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hue = Math.abs(hash) % 360;
+        userColors[name] = `hsl(${hue}, 70%, 50%)`;
+    }
+    return userColors[name];
+}
 
 // Entrar al chat
 startChatBtn.addEventListener("click", () => {
@@ -68,13 +83,14 @@ function registrarUsuario() {
     });
 }
 
-// Escuchar lista de usuarios conectados
+// Escuchar lista de usuarios conectados con color
 function escucharUsuarios() {
     onValue(ref(db, "usuarios"), (snapshot) => {
         userList.innerHTML = "<strong>Conectados:</strong><br>";
         const data = snapshot.val();
         for (let u in data) {
-            userList.innerHTML += `✅ ${u}<br>`;
+            const color = getUserColor(u);
+            userList.innerHTML += `<span style="color:${color}">✅ ${u}</span><br>`;
         }
     });
 }
@@ -104,7 +120,7 @@ function enviarMensaje(texto) {
     }
 }
 
-// Escuchar mensajes en tiempo real con hora
+// Escuchar mensajes en tiempo real con hora y color
 function escucharMensajes() {
     onValue(ref(db, "mensajes"), (snapshot) => {
         chatBox.innerHTML = "";
@@ -117,12 +133,12 @@ function escucharMensajes() {
                 msgDiv.classList.add("my-message");
             }
 
-            // Formatear hora (HH:MM)
+            // Formatear hora
             const fecha = new Date(msg.timestamp);
             const hora = fecha.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
             msgDiv.innerHTML = `
-                <span class="username">${msg.usuario}:</span> ${msg.texto}
+                <span class="username" style="color:${getUserColor(msg.usuario)}">${msg.usuario}:</span> ${msg.texto}
                 <div class="text-muted small">${hora}</div>
             `;
             chatBox.appendChild(msgDiv);
